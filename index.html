@@ -1,0 +1,693 @@
+<!--
+                Interpretation: Update the game by adding an "auto-roll" feature in the upgrades section.
+                Ensure that upgrades have a pickle theme.
+                Retain all existing functionality, comments, and appearance where applicable.
+            -->
+<div id="gameCtn" style="max-width: 800px; margin: auto; font-family: Arial, sans-serif">
+  <div id="titleScreen">
+    <h1>PickleRNG <span>🥒</span></h1>
+    <!-- Title updated to "PickleRNG🥒" -->
+    <input id="usernameInput" placeholder="Enter username" />
+    <button id="startBtn" onclick="startGame()" style="background-color: #4caf50; color: white; border-radius: 5px">Start Pickling</button>
+  </div>
+
+  <div id="gameScreen" hidden>
+    <div id="tabsCtn" style="display: flex; flex-wrap: wrap; gap: 5px; background-color: #4caf50; padding: 10px">
+      <button onclick="showTab('main')" style="background-color: #4caf50; color: white">Main</button>
+      <button onclick="showTab('inventory')" style="background-color: #4caf50; color: white">Pickle Vault</button>
+      <button onclick="showTab('upgrades')" style="background-color: #4caf50; color: white">Upgrades</button>
+      <button onclick="showTab('achievements')" style="background-color: #4caf50; color: white">Pickle Champs</button>
+      <button onclick="showTab('settings')" style="background-color: #4caf50; color: white">Settings</button>
+      <button id="adminTabBtn" hidden onclick="showTab('admin')" style="background-color: #4caf50; color: white">Admin</button>
+    </div>
+
+    <div id="mainTab">
+      <h2>Main Pickling Station</h2>
+      <div id="displayedTitle" style="font-size: 48px">Pickle Master</div>
+      <button id="rollBtn" onclick="toggleRoll()" style="background-color: #4caf50; color: white; border-radius: 5px">Roll Pickle</button>
+      <button id="autoRollBtn" hidden onclick="toggleAutoRoll()" style="background-color: #ff6347; color: white; border-radius: 5px">Start Auto Pickle</button>
+      <div id="cooldownBar" hidden style="width: 200px; height: 20px; background: #eee; margin: 10px auto">
+        <div id="cooldownProgress" style="width: 0; height: 100%; background: #4caf50"></div>
+      </div>
+      <div>Dill Luck: <span id="luckDisplay">1%</span></div>
+      <div>Money: $<span id="moneyDisplay">0</span></div>
+      <div id="potionPopup" style="position: fixed; bottom: 10px; left: 10px; background-color: #4caf50; color: white; padding: 5px; border-radius: 5px; font-size: 12px" hidden></div>
+      <div id="achievementPopup" style="position: fixed; bottom: 50px; right: 10px; background-color: #ffd700; color: black; padding: 10px; border-radius: 5px" hidden>Pickle Milestone Reached!</div>
+      <div id="moneyInputCtn" hidden>
+        <label for="moneyInput">Add Money:</label>
+        <input id="moneyInput" type="number" placeholder="$" style="width: 60px" />
+        <button onclick="earnMoney(parseInt(moneyInput.value) || 0)" style="background-color: #28a745; color: white; border-radius: 5px">Add</button>
+      </div>
+    </div>
+
+    <div id="inventoryTab" hidden>
+      <h2>Pickle Vault</h2>
+      <div id="inventoryList"></div>
+    </div>
+
+    <!-- Pickle-themed Upgrades Section -->
+    <div id="upgradesTab" hidden>
+      <h2>Pickle Upgrades</h2>
+      <div id="upgradeTree"></div>
+      <h3>Pickle Shop</h3>
+      <div id="shopArea">
+        <button onclick="buyPotion('cooldown')" style="background-color: #4caf50; color: white; border-radius: 5px">Cooldown Reducer ($300)</button>
+        <button onclick="buyPotion('luckIncrease')" style="background-color: #4caf50; color: white; border-radius: 5px">Luck Increaser ($500)</button>
+        <button onclick="buyPotion('cosmicLuck')" style="background-color: #4caf50; color: white; border-radius: 5px">Cosmic Dill Luck ($1000000)</button>
+        <button onclick="buyPotion('mystery')" style="background-color: #4caf50; color: white; border-radius: 5px">Mystery Pickle Potion ($200)</button>
+        <!-- New Auto-Roll Upgrade -->
+        <button onclick="buyUpgrade('autoRoll')" style="background-color: #4caf50; color: white; border-radius: 5px">Auto Roll Upgrade ($1000)</button>
+      </div>
+    </div>
+
+    <div id="achievementsTab" hidden>
+      <h2>Pickle Champs</h2>
+      <div id="achievementsList"></div>
+    </div>
+
+    <div id="settingsTab" hidden>
+      <h2>Settings</h2>
+      <input id="changeUsernameInput" placeholder="Rename yourself" />
+      <button onclick="changeUsername()" style="background-color: #4caf50; color: white; border-radius: 5px">Change Name</button>
+      <button onclick="toggleDarkMode()" style="background-color: #4caf50; color: white; border-radius: 5px">Toggle Dark Mode</button>
+      <button onclick="saveGame()" style="background-color: #4caf50; color: white; border-radius: 5px">Save Pickles</button>
+      <input id="loadCodeInput" placeholder="Enter save code" />
+      <button onclick="loadGame()" style="background-color: #4caf50; color: white; border-radius: 5px">Load Pickles</button>
+      <button onclick="resetGame()" style="background-color: #ff4136; color: white; border-radius: 5px">Reset Pickles</button>
+      <div id="stats">
+        <h3>Pickle Stats</h3>
+        <div>Total Rolls: <span id="totalRollsDisplay">0</span></div>
+        <div>Total Milestones: <span id="totalAchievementsDisplay">0</span></div>
+      </div>
+    </div>
+
+    <div id="adminTab" hidden>
+      <h2>Admin</h2>
+      <div>
+        <label for="luckBoostInput">Dill Boost (%):</label>
+        <input id="luckBoostInput" type="number" min="1" max="1000" value="1" step="1" />
+        <button onclick="adjustLuckBoost()" style="background-color: #4caf50; color: white; border-radius: 5px">Apply Dill Boost</button>
+      </div>
+      <div>
+        <label for="cooldownInput">Roll Speed (ms):</label>
+        <input id="cooldownInput" type="number" min="100" max="10000" value="5000" />
+        <button onclick="adjustCooldown()" style="background-color: #4caf50; color: white; border-radius: 5px">Apply Cooldown</button>
+      </div>
+      <div>
+        <button onclick="usePotion('cooldown')" style="background-color: #4caf50; color: white; border-radius: 5px">Use Cooldown Potion</button>
+        <button onclick="usePotion('luckIncrease')" style="background-color: #4caf50; color: white; border-radius: 5px">Use Luck Increase Potion</button>
+        <button onclick="usePotion('cosmicLuck')" style="background-color: #4caf50; color: white; border-radius: 5px">Use Cosmic Luck Potion</button>
+        <button onclick="usePotion('mystery')" style="background-color: #4caf50; color: white; border-radius: 5px">Use Mystery Potion</button>
+      </div>
+      <div>
+        <button onclick="earnMoney(1000)" style="background-color: #28a745; color: white; border-radius: 5px">Add $1000</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let username = "";
+  let money = 0;
+  let inventory = {};
+  let upgrades = {};
+  let achievements = {};
+  let lastRolledTitle = "Pickle Master";
+  let isRolling = false;
+  let cooldownActive = false;
+  let luckBoost = 1;
+  let cooldownDuration = 5000;
+  let activeEffects = {};
+  let potionTimers = {};
+  let autoRollInterval;
+  let luckPercentage = 1;
+  let totalRolls = 0;
+  let totalAchievements = 0;
+  let eagerGamblerAchievement = false;
+  let darkMode = false;
+  let drinkedPotions = 0;
+
+  const titles = {
+    "Pickle Novice": "Common Tier",
+    "Pickle Enthusiast": "Uncommon Tier",
+    "Pickle Master": "Rare Tier",
+    "Pickle Legend": "Epic Tier",
+    "Pickle Myth": "Mythic Tier",
+    "Gherkin Guru": "Epic Tier",
+    "Dill Devotee": "Uncommon Tier",
+    "Cucumber Captain": "Common Tier",
+    "Brine Baron": "Rare Tier",
+    "Vinegar Virtuoso": "Mythic Tier",
+    "Sauerkraut Scholar": "Rare Tier",
+    "Fermenting Fanatic": "Uncommon Tier",
+    "Jar Jester": "Common Tier",
+    "Pint Preserve Paladin": "Common Tier",
+    "Garlic Guardian": "Rare Tier",
+    "Peppercorn Prowess": "Uncommon Tier",
+    "Chilli Champion": "Epic Tier",
+    "Savory Sage": "Rare Tier",
+    "Sugar Sage": "Common Tier",
+    "Turmeric Titan": "Epic Tier",
+    "Capsicum King": "Mythic Tier",
+    "Spice Sultan": "Epic Tier",
+    "Seasoning Samurai": "Rare Tier",
+    "Aromatic Acolyte": "Uncommon Tier",
+    "Basil Baron": "Common Tier",
+    "The Salt Sage": "Mythic Tier",
+    "Herb Hunter": "Uncommon Tier",
+    "The Roll Ruler": "Common Tier",
+    "King of Pickle Land": "Legendary Tier",
+    "Knight of the Jar": "Epic Tier",
+    "Marinade Master": "Rare Tier",
+    "Preserve Prince": "Common Tier",
+    "Fried Pickle Fandom": "Common Tier",
+    "Pickle Enthusiast (with a twist)": "Uncommon Tier",
+    "Jar Jewel": "Epic Tier",
+    "Sour Sovereign": "Legendary Tier",
+    "Salt Sultan": "Mythic Tier",
+    "Brine Brilliance": "Epic Tier",
+    "The Vinegar Vanquisher": "Mythical Tier",
+    "Pickle Paladin": "Rare Tier",
+    "Dill Dynamo": "Uncommon Tier",
+    "Brine Brain": "Rare Tier",
+    "Vinegar Victor": "Epic Tier",
+    "Garlic Guru": "Mythic Tier",
+    "Peppercorn Poet": "Mythical Tier",
+    "Herb Herald": "Legendary Tier",
+  };
+
+  const rarities = {
+    "Pickle Novice": { chance: 0.2, value: 100 },
+    "Pickle Enthusiast": { chance: 0.1, value: 200 },
+    "Pickle Master": { chance: 0.05, value: 500 },
+    "Pickle Legend": { chance: 0.01, value: 1000 },
+    "Pickle Myth": { chance: 0.001, value: 5000 },
+    "Gherkin Guru": { chance: 0.01, value: 1000 },
+    "Dill Devotee": { chance: 0.1, value: 200 },
+    "Cucumber Captain": { chance: 0.3, value: 50 },
+    "Brine Baron": { chance: 0.07, value: 350 },
+    "Vinegar Virtuoso": { chance: 0.002, value: 7000 },
+    "Sauerkraut Scholar": { chance: 0.05, value: 500 },
+    "Fermenting Fanatic": { chance: 0.1, value: 200 },
+    "Jar Jester": { chance: 0.3, value: 50 },
+    "Pint Preserve Paladin": { chance: 0.3, value: 50 },
+    "Garlic Guardian": { chance: 0.05, value: 500 },
+    "Peppercorn Prowess": { chance: 0.1, value: 200 },
+    "Chilli Champion": { chance: 0.01, value: 1000 },
+    "Savory Sage": { chance: 0.05, value: 500 },
+    "Sugar Sage": { chance: 0.3, value: 50 },
+    "Turmeric Titan": { chance: 0.01, value: 1000 },
+    "Capsicum King": { chance: 0.002, value: 7000 },
+    "Spice Sultan": { chance: 0.01, value: 1000 },
+    "Seasoning Samurai": { chance: 0.05, value: 500 },
+    "Aromatic Acolyte": { chance: 0.1, value: 200 },
+    "Basil Baron": { chance: 0.3, value: 50 },
+    "The Salt Sage": { chance: 0.001, value: 8000 },
+    "Herb Hunter": { chance: 0.1, value: 200 },
+    "The Roll Ruler": { chance: 0.3, value: 50 },
+    "King of Pickle Land": { chance: 0.0005, value: 10000 },
+    "Knight of the Jar": { chance: 0.01, value: 1000 },
+    "Marinade Master": { chance: 0.05, value: 500 },
+    "Preserve Prince": { chance: 0.3, value: 50 },
+    "Fried Pickle Fandom": { chance: 0.3, value: 50 },
+    "Pickle Enthusiast (with a twist)": { chance: 0.1, value: 200 },
+    "Jar Jewel": { chance: 0.01, value: 1000 },
+    "Sour Sovereign": { chance: 0.0005, value: 10000 },
+    "Salt Sultan": { chance: 0.001, value: 8000 },
+    "Brine Brilliance": { chance: 0.01, value: 1000 },
+    "The Vinegar Vanquisher": { chance: 0.001, value: 8500 },
+    "Pickle Paladin": { chance: 0.05, value: 500 },
+    "Dill Dynamo": { chance: 0.1, value: 200 },
+    "Brine Brain": { chance: 0.05, value: 500 },
+    "Vinegar Victor": { chance: 0.01, value: 1000 },
+    "Garlic Guru": { chance: 0.001, value: 8000 },
+    "Peppercorn Poet": { chance: 0.0005, value: 9000 },
+    "Herb Herald": { chance: 0.0002, value: 10000 },
+  };
+
+  const achievementsDefinitions = [
+    { name: "First Pickle", requirement: "Roll a pickle once", effect: { attribute: "luckPercentage", increase: 5 } },
+    { name: "Pickle Millionaire", requirement: "Earn $1,000,000", effect: { attribute: "money", increase: 1000000 } },
+    { name: "Dill Expert", requirement: "Achieve a dill luck of 15%", effect: { attribute: "luckPercentage", increase: 15 } },
+    { name: "Ultimate Pickler", requirement: "Achieve 25% dill luck", effect: { attribute: "luckPercentage", increase: 25 } },
+    { name: "Dill Fortune", requirement: "Amass $10,000,000", effect: { attribute: "money", increase: 10000000 } },
+    { name: "Pickle Enthusiast", requirement: "Collect diverse pickles", effect: { attribute: "inventory", add: "title" } },
+    { name: "Speed Pickler", requirement: "Lower the cooldown significantly", effect: { attribute: "cooldownDuration", decrease: 600 } },
+    { name: "Pickle Wizard", requirement: "Elevate to 40% dill luck", effect: { attribute: "luckPercentage", increase: 40 } },
+    {
+      name: "Eager Pickler",
+      requirement: "Unknown pickle condition",
+      effect: { attribute: "cooldownDuration", decrease: 150 },
+      condition: function () {
+        return eagerGamblerAchievement;
+      },
+    },
+    { name: "Dill Potion Mastery", requirement: "Drink 10 potions", effect: { attribute: "luckPercentage", increase: 15 }, condition: () => drinkedPotions >= 10 },
+  ];
+
+  function showTab(tabName) {
+    ["main", "inventory", "upgrades", "achievements", "settings", "admin"].forEach((tab) => {
+      document.getElementById(tab + "Tab").hidden = tab !== tabName;
+    });
+  }
+
+  function startGame() {
+    username = usernameInput.value;
+    if (username === "Pickle222") {
+      adminTabBtn.hidden = false;
+      moneyInputCtn.hidden = false;
+    }
+    titleScreen.hidden = true;
+    gameScreen.hidden = false;
+    unlockEagerGamblerAchievement();
+    showTab("main");
+    updateInventoryDisplay();
+    updateUpgradeTree();
+    updateAchievements();
+  }
+
+  function unlockEagerGamblerAchievement() {
+    if (randomTitle.textContent !== "Pickle Master") {
+      eagerGamblerAchievement = true;
+    }
+  }
+
+  function earnMoney(amount) {
+    if (username === "Pickle222") {
+      money += amount;
+      moneyDisplay.textContent = money;
+    } else {
+      alert("Only secret users can modify money!");
+    }
+  }
+
+  function toggleRoll() {
+    if (isRolling) {
+      clearInterval(autoRollInterval);
+      isRolling = false;
+      rollBtn.textContent = "Roll Pickle";
+      autoRollBtn.textContent = "Start Auto Pickle";
+      autoRollBtn.hidden = upgrades.autoRoll ? false : true;
+    } else {
+      rollTitle();
+    }
+  }
+
+  async function rollTitle() {
+    if (cooldownActive) return;
+    isRolling = true;
+    rollBtn.disabled = true;
+    autoRollBtn.disabled = true;
+
+    await animateTitle(displayedTitle);
+
+    let rolledTitle = weightedRandomTitle();
+    displayedTitle.textContent = rolledTitle;
+    lastRolledTitle = rolledTitle;
+    inventory[rolledTitle] = (inventory[rolledTitle] || 0) + 1;
+    updateInventoryDisplay();
+    checkAchievements();
+
+    totalRolls++;
+    updateStats();
+    isRolling = false;
+    startCooldown();
+  }
+
+  async function animateTitle(element) {
+    const emojis = ["🥒", "+", "🥃", "="]; // Modified the emoji from salt to vinegar
+    for (let i = 0; i < emojis.length; i++) {
+      element.textContent = emojis.slice(0, i + 1).join(" ");
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+  }
+
+  function weightedRandomTitle() {
+    let totalWeight = Object.values(rarities).reduce((sum, { chance }) => sum + chance, 0);
+    let random = Math.random() * totalWeight;
+    for (let [title, { chance }] of Object.entries(rarities)) {
+      if (random < chance) return title;
+      random -= chance;
+    }
+    return "Pickle Master"; // Fallback
+  }
+
+  function startCooldown() {
+    let actualCooldown = Math.max(1000, cooldownDuration * (activeEffects.cooldown ? 0.5 : 1));
+    cooldownActive = true;
+    cooldownBar.hidden = false;
+    let progress = 0;
+    let cooldownInterval = setInterval(() => {
+      progress += eagerGamblerAchievement ? 3 : 2;
+      cooldownProgress.style.width = `${progress}%`;
+      if (progress >= 100) {
+        clearInterval(cooldownInterval);
+        cooldownActive = false;
+        rollBtn.disabled = false;
+        autoRollBtn.disabled = false;
+        cooldownBar.hidden = true;
+        if (isRolling && autoRollInterval) rollTitle();
+      }
+    }, actualCooldown / 50);
+  }
+
+  function updateInventoryDisplay() {
+    inventoryList.innerHTML = "";
+    for (let [title, count] of Object.entries(inventory)) {
+      let rarityChance = (rarities[title].chance * 100).toFixed(4);
+      let listItem = document.createElement("div");
+      listItem.innerHTML = `${title} x${count} (${rarityChance}%) <button onclick="sellTitle('${title}')" style="background-color: #4CAF50; color: white; border-radius: 5px;">Sell</button>`;
+      inventoryList.appendChild(listItem);
+    }
+    let potionsList = document.createElement("div");
+    for (let [potion, count] of Object.entries(inventory)) {
+      if (["cooldown", "luckIncrease", "cosmicLuck", "mystery"].includes(potion)) {
+        potionsList.innerHTML += `<button onclick="usePotion('${potion}')" style="background-color: #4CAF50; color: white; border-radius: 5px;">Use ${potion} Potion (${count})</button>`;
+      }
+    }
+    inventoryList.appendChild(potionsList);
+  }
+
+  function sellTitle(title) {
+    let quantity = parseInt(prompt(`How many ${title} titles do you want to sell? (You have ${inventory[title]})`)) || 0;
+    if (quantity > 0 && quantity <= inventory[title]) {
+      inventory[title] -= quantity;
+      money += rarities[title].value * quantity;
+      if (inventory[title] === 0) delete inventory[title];
+      updateInventoryDisplay();
+      moneyDisplay.textContent = money;
+    }
+  }
+
+  function updateUpgradeTree() {
+    upgradeTree.innerHTML = `
+                    <button onclick="buyUpgrade('luck')" style="background-color: #4CAF50; color: white; border-radius: 5px;">Increase Dill Luck ($100)</button>
+                    <button onclick="buyUpgrade('cooldown')" style="background-color: #4CAF50; color: white; border-radius: 5px;">Reduce Cooldown ($200)</button>
+                    <button onclick="buyUpgrade('autoRoll')" style="background-color: #4CAF50; color: white; border-radius: 5px;">Enable Auto Roll ($1000)</button>
+                  `;
+  }
+
+  function buyUpgrade(upgrade) {
+    let costs = { luck: 100, cooldown: 200, autoRoll: 1000 };
+    if (money >= costs[upgrade] && !upgrades[upgrade]) {
+      money -= costs[upgrade];
+      upgrades[upgrade] = true;
+      autoRollBtn.hidden = upgrade === "autoRoll" ? false : autoRollBtn.hidden;
+      moneyDisplay.textContent = money;
+      updateUpgradeTree();
+    }
+  }
+
+  function buyAutoRoll() {} // No longer needed, logic integrated with buyUpgrade
+
+  function toggleAutoRoll() {
+    if (isRolling) {
+      clearInterval(autoRollInterval);
+      isRolling = false;
+      rollBtn.textContent = "Roll Pickle";
+      autoRollBtn.textContent = "Start Auto Pickle";
+    } else {
+      rollBtn.textContent = "Roll Pickle";
+      autoRollBtn.textContent = "Stop Auto Pickle";
+      autoRollInterval = setInterval(rollTitle, 1050);
+      isRolling = true;
+    }
+  }
+
+  function updateAchievements() {
+    achievementsList.innerHTML = "";
+    achievementsDefinitions.forEach(({ name, requirement }) => {
+      let btn = document.createElement("button");
+      btn.textContent = `${name}: ${achievements[name] ? "✅" : "❌"}`;
+      btn.style.backgroundColor = achievements[name] ? "#4CAF50" : "#F44336";
+      btn.style.color = "white";
+      btn.style.borderRadius = "5px";
+      btn.onclick = () => displayAchievementRequirements(name, requirement);
+      achievementsList.appendChild(btn);
+    });
+  }
+
+  function displayAchievementRequirements(name, requirement) {
+    let achievement = achievementsDefinitions.find((ach) => ach.name === name);
+    if (achievement) {
+      if (name === "Eager Pickler" && !achievements[name]) {
+        unlockAchievement(name, achievement.effect);
+        showAchievementPopup("All you had to do was ask.");
+        return;
+      }
+      let requirements = achievement.condition ? "Special Pickle Requirement" : requirement;
+      alert(`${name} - ${requirements}`);
+    }
+  }
+
+  function unlockAchievement(name, effect) {
+    achievements[name] = true;
+    updateAchievements();
+    showAchievementPopup(name);
+    applyAchievementEffect(effect);
+  }
+
+  function showAchievementPopup(name) {
+    achievementPopup.textContent = `Pickle Milestone Reached: ${name}`;
+    achievementPopup.hidden = false;
+    setTimeout(() => {
+      achievementPopup.hidden = true;
+    }, 3000);
+  }
+
+  function applyAchievementEffect(effect) {
+    if (effect.increase) {
+      if (effect.attribute === "luckPercentage") {
+        luckPercentage += effect.increase;
+        luckDisplay.textContent = `${luckPercentage}%`;
+      }
+      if (effect.attribute === "money") {
+        money += effect.increase;
+        moneyDisplay.textContent = money;
+      }
+    } else if (effect.decrease) {
+      if (effect.attribute === "cooldownDuration") {
+        cooldownDuration = Math.max(1000, cooldownDuration - effect.decrease);
+      }
+    }
+  }
+
+  function checkAchievements() {
+    achievementsDefinitions.forEach(({ name, effect, condition }) => {
+      if (!achievements[name]) {
+        if (name === "First Pickle" && totalRolls >= 1) unlockAchievement(name, effect);
+        if (name === "Pickle Millionaire" && money >= 1000000) unlockAchievement(name, effect);
+        if (name === "Dill Potion Mastery" && activeEffects.mystery) unlockAchievement(name, effect);
+        if (condition && condition()) unlockAchievement(name, effect);
+      }
+    });
+    totalAchievements = Object.values(achievements).filter(Boolean).length;
+    updateAchievements();
+  }
+
+  function changeUsername() {
+    username = changeUsernameInput.value;
+    alert(`Username changed to ${username}`);
+    if (username === "Pickle222") {
+      adminTabBtn.hidden = false;
+      moneyInputCtn.hidden = false;
+    }
+  }
+
+  function toggleDarkMode() {
+    darkMode = !darkMode;
+    document.body.style.backgroundColor = darkMode ? "black" : "white";
+    document.body.style.color = darkMode ? "white" : "black";
+  }
+
+  function saveGame() {
+    let saveData = {
+      name: username,
+      inventory: JSON.stringify(inventory),
+      money: money,
+      luckPercentage: luckPercentage,
+      cooldownDuration: cooldownDuration,
+      darkMode: darkMode,
+      achievements: JSON.stringify(achievements),
+      upgrades: JSON.stringify(upgrades),
+    };
+    let saveCode = btoa(JSON.stringify(saveData));
+    loadCodeInput.value = saveCode;
+    alert("Game saved successfully! Save code has been added to the 'Enter save code' field.");
+  }
+
+  function loadGame() {
+    try {
+      let decoded = atob(loadCodeInput.value);
+      let loadedData = JSON.parse(decoded);
+      username = loadedData.name;
+      inventory = JSON.parse(loadedData.inventory);
+      money = loadedData.money;
+      luckPercentage = loadedData.luckPercentage;
+      cooldownDuration = loadedData.cooldownDuration;
+      darkMode = loadedData.darkMode;
+      achievements = JSON.parse(loadedData.achievements);
+      upgrades = JSON.parse(loadedData.upgrades);
+      updateInventoryDisplay();
+      updateUpgradeTree();
+      updateAchievements();
+      moneyDisplay.textContent = money;
+      luckDisplay.textContent = `${luckPercentage}%`;
+      if (darkMode) toggleDarkMode();
+      if (username === "Pickle222") {
+        adminTabBtn.hidden = false;
+        moneyInputCtn.hidden = false;
+      }
+      titleScreen.hidden = false;
+      gameScreen.hidden = true;
+      showTab("main");
+      usernameInput.value = username;
+      eagerGamblerAchievement = true;
+      alert("Game loaded successfully!");
+      checkAchievements();
+    } catch (e) {
+      alert("Invalid save code!");
+    }
+  }
+
+  function adjustLuckBoost() {
+    luckPercentage = parseFloat(luckBoostInput.value);
+    luckDisplay.textContent = `${luckPercentage}%`;
+    alert(`Dill boost set to ${luckPercentage}%`);
+  }
+
+  function adjustCooldown() {
+    cooldownDuration = parseInt(cooldownInput.value);
+    alert(`Roll speed cooldown set to ${cooldownDuration}ms`);
+  }
+
+  function buyPotion(potionType) {
+    let costs = { cooldown: 300, luckIncrease: 500, cosmicLuck: 1000000, mystery: 200 };
+    if (money >= costs[potionType]) {
+      money -= costs[potionType];
+      inventory[potionType] = (inventory[potionType] || 0) + 1;
+      moneyDisplay.textContent = money;
+      updateInventoryDisplay();
+    }
+  }
+
+  function usePotion(potionType) {
+    if (inventory[potionType] && inventory[potionType] > 0) {
+      applyPotionEffect(potionType);
+      inventory[potionType]--;
+      if (inventory[potionType] === 0) delete inventory[potionType];
+      updateInventoryDisplay();
+    }
+  }
+
+  function applyPotionEffect(type) {
+    if (type === "cooldown") {
+      applyEffect("cooldown", "Cooldown", 180);
+    } else if (type === "luckIncrease") {
+      drinkedPotions++;
+      applyEffect("luckIncrease", "Luck Increase", 180, true);
+    } else if (type === "cosmicLuck") {
+      applyEffect("luckIncrease", "Cosmic Luck", 1, true, 1000);
+    } else if (type === "mystery") {
+      applyEffect("mystery", "Mystery", 180, true, getRandomMultiplier());
+    }
+  }
+
+  function getRandomMultiplier() {
+    let randomLuckChange = Math.floor(Math.random() * 201) - 100;
+    return 1 + randomLuckChange / 100;
+  }
+
+  function applyEffect(effectKey, effectName, duration, isLuck = false, multiplier = 2) {
+    if (!potionTimers[effectKey]) potionTimers[effectKey] = 0;
+    potionTimers[effectKey] += duration * 60;
+
+    if (!activeEffects[effectKey]) {
+      activeEffects[effectKey] = isLuck ? luckPercentage * multiplier : true;
+      if (isLuck) luckPercentage *= multiplier;
+      luckDisplay.textContent = `${luckPercentage}%`;
+
+      const interval = setInterval(() => {
+        potionTimers[effectKey]--;
+        updatePotionPopup(effectName, potionTimers[effectKey]);
+
+        if (potionTimers[effectKey] <= 0) {
+          clearInterval(interval);
+          if (isLuck) {
+            luckPercentage /= multiplier;
+            luckDisplay.textContent = `${luckPercentage.toFixed(2)}%`;
+          } else {
+            activeEffects[effectKey] = false;
+          }
+          delete potionTimers[effectKey];
+          potionPopup.hidden = true;
+        }
+      }, 1000);
+    }
+  }
+
+  function updatePotionPopup(effectName, secondsLeft) {
+    potionPopup.hidden = false;
+    potionPopup.textContent = `${effectName} effect: ${Math.floor(secondsLeft / 60)}m ${secondsLeft % 60}s left`;
+  }
+
+  function updateStats() {
+    totalRollsDisplay.textContent = totalRolls;
+    totalAchievementsDisplay.textContent = totalAchievements;
+  }
+
+  function resetGame() {
+    if (confirm("Are you sure you want to reset the game? This will erase all progress.")) {
+      username = "";
+      money = 0;
+      inventory = {};
+      upgrades = {};
+      achievements = {};
+      lastRolledTitle = "Pickle Master";
+      isRolling = false;
+      cooldownActive = false;
+      luckBoost = 1;
+      cooldownDuration = 5000;
+      activeEffects = {};
+      potionTimers = {};
+      clearInterval(autoRollInterval);
+      luckPercentage = 1;
+      totalRolls = 0;
+      totalAchievements = 0;
+      eagerGamblerAchievement = false;
+
+      usernameInput.value = "";
+      moneyDisplay.textContent = "0";
+      luckDisplay.textContent = "1%";
+      displayedTitle.textContent = "Pickle Master";
+
+      updateInventoryDisplay();
+      updateUpgradeTree();
+      updateAchievements();
+      updateStats();
+
+      titleScreen.hidden = false;
+      gameScreen.hidden = true;
+
+      alert("Game has been reset!");
+    }
+  }
+
+  async function animateAndSetRandomTitle() {
+    for (let i = 0; i < 50; i++) {
+      // Simple animation cycling through titles
+      const availableTitles = Object.keys(titles);
+      randomTitle.textContent = availableTitles[Math.floor(Math.random() * availableTitles.length)];
+      await new Promise((resolve) => setTimeout(resolve, 100)); // Pause between cycles for animation effect
+    }
+    setRandomTitle();
+  }
+
+  function setRandomTitle() {
+    const availableTitles = Object.keys(titles);
+    randomTitle.textContent = availableTitles[Math.floor(Math.random() * availableTitles.length)];
+  }
+
+  setRandomTitle();
+  updateStats();
+</script>
